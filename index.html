@@ -18,52 +18,55 @@
     </div>
     
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyBfqQkLMdirE1s3QDAU-k8kZJDSJ-AHfxI",
-            authDomain: "madrsa-sikariya.firebaseapp.com",
-            projectId: "madrsa-sikariya",
-            storageBucket: "madrsa-sikariya.firebasestorage.app",
-            messagingSenderId: "1066102927865",
-            appId: "1:1066102927865:web:d5e649be4178d363408d28",
-            measurementId: "G-3S96TVYFJC"
-        };
+        // Ensure Firebase is loaded before using it
+        document.addEventListener('DOMContentLoaded', function() {
+            const firebaseConfig = {
+                apiKey: "AIzaSyBfqQkLMdirE1s3QDAU-k8kZJDSJ-AHfxI",
+                authDomain: "madrsa-sikariya.firebaseapp.com",
+                projectId: "madrsa-sikariya",
+                storageBucket: "madrsa-sikariya.firebasestorage.app",
+                messagingSenderId: "1066102927865",
+                appId: "1:1066102927865:web:d5e649be4178d363408d28",
+                measurementId: "G-3S96TVYFJC"
+            };
 
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const messaging = firebase.messaging();
+            // Initialize Firebase
+            firebase.initializeApp(firebaseConfig);
+            const messaging = firebase.messaging();
 
-        // Check notification permission on page load
-        window.addEventListener('load', checkNotificationPermission);
+            // Check notification permission on page load
+            window.addEventListener('load', checkNotificationPermission);
 
-        function checkNotificationPermission() {
-            if (Notification.permission !== 'granted') {
-                document.getElementById('notification-prompt').style.display = 'block';
-            }
-        }
-
-        function requestPermission() {
-            Notification.requestPermission().then((permission) => {
-                if (permission === 'granted') {
-                    messaging.getToken({ vapidKey: 'BClpcTQygEYX1ueX4n8GTMN0UmSsaeM1JwpbRoI81WxOaHGB4gQHJl-bNiyBJmp_c5CryDL0NGiWAd2a7z3CpB4' })
-                        .then((currentToken) => {
-                            if (currentToken) {
-                                console.log('Token:', currentToken);
-                                document.getElementById('notification-prompt').style.display = 'none';
-                            }
-                        })
-                        .catch((err) => {
-                            console.log('Error getting token:', err);
-                        });
+            function checkNotificationPermission() {
+                if (Notification.permission !== 'granted') {
+                    document.getElementById('notification-prompt').style.display = 'block';
                 }
-            });
-        }
+            }
 
-        // Handle foreground messages
-        messaging.onMessage((payload) => {
-            console.log('Message received:', payload);
-            new Notification(payload.notification.title, {
-                body: payload.notification.body,
-                icon: payload.notification.icon
+            function requestPermission() {
+                Notification.requestPermission().then((permission) => {
+                    if (permission === 'granted') {
+                        messaging.getToken({ vapidKey: 'BClpcTQygEYX1ueX4n8GTMN0UmSsaeM1JwpbRoI81WxOaHGB4gQHJl-bNiyBJmp_c5CryDL0NGiWAd2a7z3CpB4' })
+                            .then((currentToken) => {
+                                if (currentToken) {
+                                    console.log('Token:', currentToken);
+                                    document.getElementById('notification-prompt').style.display = 'none';
+                                }
+                            })
+                            .catch((err) => {
+                                console.log('Error getting token:', err);
+                            });
+                    }
+                });
+            }
+
+            // Handle foreground messages
+            messaging.onMessage((payload) => {
+                console.log('Message received:', payload);
+                new Notification(payload.notification.title, {
+                    body: payload.notification.body,
+                    icon: payload.notification.icon
+                });
             });
         });
     </script>
