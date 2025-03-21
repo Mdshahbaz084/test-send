@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Firebase Push Notification</title>
+    <title>Push Notifications</title>
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-messaging.js"></script>
     <style>
@@ -12,7 +12,10 @@
 </head>
 <body>
     <h1>Firebase Push Notification Example</h1>
-    <button id="notify-btn">Enable Notifications</button>
+    <div id="notification-prompt" style="display: none;">
+        <p>कृपया नोटिफिकेशन को एनेबल करें</p>
+        <button onclick="requestPermission()">Enable Notifications</button>
+    </div>
     
     <script>
         const firebaseConfig = {
@@ -25,60 +28,44 @@
             measurementId: "G-3S96TVYFJC"
         };
 
+        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
-        const messaging = firebase.messaging ? firebase.messaging() : null;
-        const notifyBtn = document.getElementById("notify-btn");
+        const messaging = firebase.messaging();
 
-        function encryptToken(token) {
-            return btoa(token); // Basic encoding, consider stronger encryption if needed
+        // Check notification permission on page load
+        window.addEventListener('load', checkNotificationPermission);
+
+        function checkNotificationPermission() {
+            if (Notification.permission !== 'granted') {
+                document.getElementById('notification-prompt').style.display = 'block';
+            }
         }
 
-        function requestNotificationPermission() {
-            Notification.requestPermission().then(permission => {
-                if (permission === "granted" && messaging) {
-                    messaging.getToken({ vapidKey: "BClpcTQygEYX1ueX4n8GTMN0UmSsaeM1JwpbRoI81WxOaHGB4gQHJl-bNiyBJmp_c5CryDL0NGiWAd2a7z3CpB4" })
-                        .then(currentToken => {
+        function requestPermission() {
+            Notification.requestPermission().then((permission) => {
+                if (permission === 'granted') {
+                    messaging.getToken({ vapidKey: 'BClpcTQygEYX1ueX4n8GTMN0UmSsaeM1JwpbRoI81WxOaHGB4gQHJl-bNiyBJmp_c5CryDL0NGiWAd2a7z3CpB4' })
+                        .then((currentToken) => {
                             if (currentToken) {
-                                console.log("FCM Token:", currentToken);
-                                sessionStorage.setItem("fcm_token", encryptToken(currentToken));
-                                notifyBtn.classList.add("hidden");
-                            } else {
-                                console.error("No registration token available.");
+                                console.log('Token:', currentToken);
+                                document.getElementById('notification-prompt').style.display = 'none';
                             }
                         })
-                        .catch(err => console.error("Error retrieving token:", err));
-                } else if (permission === "default") {
-                    console.warn("Notification permission request dismissed.");
-                } else {
-                    console.warn("Notification permission denied.");
-                    sessionStorage.removeItem("fcm_token");
-                }
-            }).catch(err => console.error("Error requesting notification permission:", err));
-        }
-
-        if (!sessionStorage.getItem("fcm_token")) {
-            notifyBtn.classList.remove("hidden");
-        } else {
-            notifyBtn.classList.add("hidden");
-        }
-
-        notifyBtn.addEventListener("click", requestNotificationPermission);
-
-        if (messaging) {
-            messaging.onMessage(payload => {
-                if (payload.notification) {
-                    console.log("Message received:", payload);
-                    new Notification(payload.notification.title, {
-                        body: payload.notification.body,
-                        icon: payload.notification.icon
-                    });
-                } else {
-                    console.warn("Received message payload does not contain notification data.", payload);
+                        .catch((err) => {
+                            console.log('Error getting token:', err);
+                        });
                 }
             });
-        } else {
-            console.error("Firebase messaging is not available.");
         }
+
+        // Handle foreground messages
+        messaging.onMessage((payload) => {
+            console.log('Message received:', payload);
+            new Notification(payload.notification.title, {
+                body: payload.notification.body,
+                icon: payload.notification.icon
+            });
+        });
     </script>
 </body>
 </html>
