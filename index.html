@@ -1,74 +1,73 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Push Notifications</title>
-    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-messaging.js"></script>
-    <style>
-        .hidden { display: none; }
-    </style>
+  <title>Firebase Push Notifications</title>
+  <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-messaging.js"></script>
 </head>
 <body>
-    <h1>Firebase Push Notification Example</h1>
-    <div id="notification-prompt" style="display: none;">
-        <p>कृपया नोटिफिकेशन को एनेबल करें</p>
-        <button onclick="requestPermission()">Enable Notifications</button>
-    </div>
-    
-    <script>
-        // Ensure Firebase is loaded before using it
-        document.addEventListener('DOMContentLoaded', function() {
-            const firebaseConfig = {
-                apiKey: "AIzaSyBfqQkLMdirE1s3QDAU-k8kZJDSJ-AHfxI",
-                authDomain: "madrsa-sikariya.firebaseapp.com",
-                projectId: "madrsa-sikariya",
-                storageBucket: "madrsa-sikariya.firebasestorage.app",
-                messagingSenderId: "1066102927865",
-                appId: "1:1066102927865:web:d5e649be4178d363408d28",
-                measurementId: "G-3S96TVYFJC"
-            };
+  <!-- ...existing code... -->
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBfqQkLMdirE1s3QDAU-k8kZJDSJ-AHfxI",
+      authDomain: "madrsa-sikariya.firebaseapp.com",
+      projectId: "madrsa-sikariya",
+      storageBucket: "madrsa-sikariya.firebasestorage.app",
+      messagingSenderId: "1066102927865",
+      appId: "1:1066102927865:web:d5e649be4178d363408d28",
+      measurementId: "G-3S96TVYFJC"
+    };
 
-            // Initialize Firebase
-            firebase.initializeApp(firebaseConfig);
-            const messaging = firebase.messaging();
+    firebase.initializeApp(firebaseConfig);
 
-            // Check notification permission on page load
-            window.addEventListener('load', checkNotificationPermission);
+    const messaging = firebase.messaging();
 
-            function checkNotificationPermission() {
-                if (Notification.permission !== 'granted') {
-                    document.getElementById('notification-prompt').style.display = 'block';
-                }
-            }
+    function requestPermission() {
+      console.log('Requesting permission...');
+      Notification.requestPermission().then((permission) => {
+        if (permission === 'granted') {
+          console.log('Notification permission granted.');
+          getToken();
+        } else {
+          console.log('Unable to get permission to notify.');
+        }
+      });
+    }
 
-            function requestPermission() {
-                Notification.requestPermission().then((permission) => {
-                    if (permission === 'granted') {
-                        messaging.getToken({ vapidKey: 'BClpcTQygEYX1ueX4n8GTMN0UmSsaeM1JwpbRoI81WxOaHGB4gQHJl-bNiyBJmp_c5CryDL0NGiWAd2a7z3CpB4' })
-                            .then((currentToken) => {
-                                if (currentToken) {
-                                    console.log('Token:', currentToken);
-                                    document.getElementById('notification-prompt').style.display = 'none';
-                                }
-                            })
-                            .catch((err) => {
-                                console.log('Error getting token:', err);
-                            });
-                    }
-                });
-            }
+    function getToken() {
+      messaging.getToken({ vapidKey: 'BClpcTQygEYX1ueX4n8GTMN0UmSsaeM1JwpbRoI81WxOaHGB4gQHJl-bNiyBJmp_c5CryDL0NGiWAd2a7z3CpB4' }).then((currentToken) => {
+        if (currentToken) {
+          console.log('Token:', currentToken);
+          // Send the token to your server or save it in local storage
+        } else {
+          console.log('No registration token available. Request permission to generate one.');
+          requestPermission();
+        }
+      }).catch((err) => {
+        console.log('An error occurred while retrieving token. ', err);
+        requestPermission();
+      });
+    }
 
-            // Handle foreground messages
-            messaging.onMessage((payload) => {
-                console.log('Message received:', payload);
-                new Notification(payload.notification.title, {
-                    body: payload.notification.body,
-                    icon: payload.notification.icon
-                });
-            });
-        });
-    </script>
+    messaging.onMessage((payload) => {
+      console.log('Message received. ', payload);
+      // Customize notification here
+      const notificationTitle = payload.notification.title;
+      const notificationOptions = {
+        body: payload.notification.body,
+        icon: '/firebase-logo.png'
+      };
+
+      new Notification(notificationTitle, notificationOptions);
+    });
+
+    if (Notification.permission === 'default') {
+      requestPermission();
+    } else if (Notification.permission === 'granted') {
+      getToken();
+    } else {
+      console.log('Notification permission denied.');
+    }
+  </script>
 </body>
 </html>
